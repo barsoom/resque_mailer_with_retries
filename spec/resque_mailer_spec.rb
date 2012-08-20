@@ -88,14 +88,26 @@ describe Resque::Mailer do
   end
 
   describe 'error handling' do
-    it 'reschedules on timeout errors' do
-      Mail::Message.any_instance.stub(:deliver).and_raise(Timeout::Error)
+    Resque::Mailer::RETRYABLE_EXCEPTIONS.each do |exception_class|
+      it "reschedules on #{exception_class} errors" do
+        Mail::Message.any_instance.stub(:deliver).and_raise(exception_class)
 
-      resque.should_receive(:enqueue).with(Rails3Mailer, 2, :test_mail, Rails3Mailer::MAIL_PARAMS)
+        resque.should_receive(:enqueue).with(Rails3Mailer, 2, :test_mail, Rails3Mailer::MAIL_PARAMS)
+
+        lambda {
+          Rails3Mailer.perform(1, :test_mail, Rails3Mailer::MAIL_PARAMS)
+        }.should_not change(ActionMailer::Base.deliveries, :size)
+      end
+    end
+
+    it "doesn't reschedule on unknown errors" do
+      Mail::Message.any_instance.stub(:deliver).and_raise("Some unknown error")
+
+      resque.should_not_receive(:enqueue)
 
       lambda {
         Rails3Mailer.perform(1, :test_mail, Rails3Mailer::MAIL_PARAMS)
-      }.should_not change(ActionMailer::Base.deliveries, :size)
+      }.should raise_exception("Some unknown error")
     end
 
     it 'raises after 3 failed attempts' do

@@ -1,6 +1,14 @@
+require "timeout"
+
 module Resque
   module Mailer
     MAX_ATTEMPTS = 3
+
+    RETRYABLE_EXCEPTIONS = [
+      Timeout::Error,
+      Errno::EPIPE,
+      Errno::ETIMEDOUT
+    ]
 
     class << self
       attr_accessor :default_queue_name, :default_queue_target
@@ -36,7 +44,7 @@ module Resque
 
       def perform(attempt_number, action, *args)
         self.send(:new, action, *args).message.deliver
-      rescue Timeout::Error
+      rescue *RETRYABLE_EXCEPTIONS
         raise if attempt_number >= MAX_ATTEMPTS
         resque.enqueue(self, attempt_number + 1, action, *args)
       end

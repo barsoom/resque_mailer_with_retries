@@ -1,3 +1,12 @@
+# resque\_mailer\_with\_retries
+
+In your Gemfile:
+
+    gem "resque_mailer_with_retries",
+      github: "barsoom/resque_mailer_with_retries",
+      require: "resque_mailer"
+
+
 # ResqueMailer
 
 A gem plugin which allows messages prepared by ActionMailer to be delivered

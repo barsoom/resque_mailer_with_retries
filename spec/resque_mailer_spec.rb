@@ -87,6 +87,27 @@ describe Resque::Mailer do
     end
   end
 
+  describe 'error handling' do
+    it 'reschedules on timeout errors' do
+      Mail::Message.any_instance.stub(:deliver).and_raise(Timeout::Error)
+
+      resque.should_receive(:enqueue).with(Rails3Mailer, 2, :test_mail, Rails3Mailer::MAIL_PARAMS)
+
+      lambda {
+        Rails3Mailer.perform(1, :test_mail, Rails3Mailer::MAIL_PARAMS)
+      }.should_not change(ActionMailer::Base.deliveries, :size)
+    end
+
+    it 'raises after 3 failed attempts' do
+      Mail::Message.any_instance.stub(:deliver).and_raise(Timeout::Error)
+
+      resque.should_not_receive(:enqueue)
+      lambda {
+        Rails3Mailer.perform(3, :test_mail, Rails3Mailer::MAIL_PARAMS)
+      }.should raise_exception(Timeout::Error)
+    end
+  end
+
   describe 'original mail methods' do
     it 'should be preserved' do
       Rails3Mailer.test_mail(Rails3Mailer::MAIL_PARAMS).subject.should == 'Subject'

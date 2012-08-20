@@ -1,5 +1,7 @@
 module Resque
   module Mailer
+    MAX_ATTEMPTS = 3
+
     class << self
       attr_accessor :default_queue_name, :default_queue_target
       attr_reader :excluded_environments
@@ -34,6 +36,9 @@ module Resque
 
       def perform(attempt_number, action, *args)
         self.send(:new, action, *args).message.deliver
+      rescue Timeout::Error
+        raise if attempt_number >= MAX_ATTEMPTS
+        resque.enqueue(self, attempt_number + 1, action, *args)
       end
 
       def environment_excluded?

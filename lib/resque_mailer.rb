@@ -32,7 +32,7 @@ module Resque
         end
       end
 
-      def perform(action, *args)
+      def perform(attempt_number, action, *args)
         self.send(:new, action, *args).message.deliver
       end
 
@@ -69,7 +69,7 @@ module Resque
       end
 
       def deliver
-        resque.enqueue(@mailer_class, @method_name, *@args)
+        resque.enqueue(@mailer_class, attempt=1, @method_name, *@args)
       end
 
       def deliver!

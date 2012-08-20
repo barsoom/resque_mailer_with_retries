@@ -54,7 +54,7 @@ describe Resque::Mailer do
     end
 
     it 'should place the deliver action on the Resque "mailer" queue' do
-      resque.should_receive(:enqueue).with(Rails3Mailer, :test_mail, Rails3Mailer::MAIL_PARAMS)
+      resque.should_receive(:enqueue).with(Rails3Mailer, 1, :test_mail, Rails3Mailer::MAIL_PARAMS)
       @delivery.call
     end
 
@@ -82,7 +82,7 @@ describe Resque::Mailer do
   describe 'perform' do
     it 'should perform a queued mailer job' do
       lambda {
-        Rails3Mailer.perform(:test_mail, Rails3Mailer::MAIL_PARAMS)
+        Rails3Mailer.perform(1, :test_mail, Rails3Mailer::MAIL_PARAMS)
       }.should change(ActionMailer::Base.deliveries, :size).by(1)
     end
   end

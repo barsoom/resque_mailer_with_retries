@@ -4,6 +4,8 @@ class FakeResque
   def self.enqueue(*args); end
 end
 
+CustomError = Class.new(StandardError)
+
 class Rails3Mailer < ActionMailer::Base
   include Resque::Mailer
   default :from => "from@example.org", :subject => "Subject"
@@ -13,6 +15,10 @@ class Rails3Mailer < ActionMailer::Base
     Resque::Mailer.success!
     mail(*params)
   end
+end
+
+class Rails3MailerWithCustomError < Rails3Mailer
+  additional_errors_to_retry [ CustomError ]
 end
 
 describe Resque::Mailer do
@@ -98,6 +104,26 @@ describe Resque::Mailer do
           Rails3Mailer.perform(1, :test_mail, Rails3Mailer::MAIL_PARAMS)
         }.should_not change(ActionMailer::Base.deliveries, :size)
       end
+    end
+
+    it "supports custom exceptions for specific mailers" do
+      Mail::Message.any_instance.stub(:deliver).and_raise(CustomError)
+
+      resque.should_receive(:enqueue).with(Rails3MailerWithCustomError, 2, :test_mail, Rails3Mailer::MAIL_PARAMS)
+
+      lambda {
+        Rails3MailerWithCustomError.perform(1, :test_mail, Rails3Mailer::MAIL_PARAMS)
+      }.should_not change(ActionMailer::Base.deliveries, :size)
+    end
+
+    it "does not leak custom errors between mailers" do
+      Mail::Message.any_instance.stub(:deliver).and_raise(CustomError)
+
+      resque.should_not_receive(:enqueue)
+
+      lambda {
+        Rails3Mailer.perform(1, :test_mail, Rails3Mailer::MAIL_PARAMS)
+      }.should raise_exception(CustomError)
     end
 
     it "doesn't reschedule on unknown errors" do

@@ -42,7 +42,7 @@ database-backed objects as parameters in your mailer and instead pass record
 identifiers. Then, in your delivery method, you can look up the record from
 the id and use it as needed.
 
-If you want to set a different default queue name for your mailer, you can 
+If you want to set a different default queue name for your mailer, you can
 change the <tt>default_queue_name</tt> property like so:
 
     # config/initializers/resque_mailer.rb
@@ -53,6 +53,16 @@ resque_mailer in a shared environment. You will need to use the new queue
 name when starting your workers.
 
     QUEUE=application_specific_mailer rake environment resque:work
+
+## Custom errors
+
+By default this plugin rescues some common errors (like Timeouts) that are
+safe to retry. You can specify custom errors on a per-mailer basis:
+
+    class MyMailer < ActionMailer::Base
+      include Resque::Mailer
+      additional_errors_to_retry [ ActiveRecord::RecordNotFound ]
+    end
 
 ## Resque::Mailer as a Project Default
 

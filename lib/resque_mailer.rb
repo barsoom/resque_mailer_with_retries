@@ -44,13 +44,13 @@ module Resque
 
       def perform(attempt_number, action, *args)
         self.send(:new, action, *args).message.deliver
-      rescue *(RETRYABLE_EXCEPTIONS + @additonal_errors_to_retry.to_a)
+      rescue *(RETRYABLE_EXCEPTIONS + @additional_errors_to_retry.to_a)
         raise if attempt_number >= MAX_ATTEMPTS
         resque.enqueue(self, attempt_number + 1, action, *args)
       end
 
       def additional_errors_to_retry(errors)
-        @additonal_errors_to_retry = errors
+        @additional_errors_to_retry = errors
       end
 
       def environment_excluded?

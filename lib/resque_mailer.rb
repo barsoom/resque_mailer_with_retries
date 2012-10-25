@@ -7,7 +7,12 @@ module Resque
     RETRYABLE_EXCEPTIONS = [
       Timeout::Error,
       Errno::EPIPE,
-      Errno::ETIMEDOUT
+      Errno::EHOSTUNREACH,
+      Errno::ECONNREFUSED,
+      Errno::ECONNRESET,
+      Errno::ETIMEDOUT,
+      SocketError,
+      EOFError
     ]
 
     class << self

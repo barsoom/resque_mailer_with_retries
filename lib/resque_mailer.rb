@@ -6,6 +6,7 @@ module Resque
 
     RETRYABLE_EXCEPTIONS = [
       Timeout::Error,
+      Net::OpenTimeout,
       Errno::EPIPE,
       Errno::EHOSTUNREACH,
       Errno::ECONNREFUSED,

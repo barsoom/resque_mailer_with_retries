@@ -1,4 +1,10 @@
-# resque\_mailer\_with\_retries
+# No longer used
+
+We rolled our own project specific background mailer with retries based on the retryable errors list from this repo.
+
+Leaving this repo around in case it's useful to someone.
+
+## resque\_mailer\_with\_retries
 
 In your Gemfile:
 
